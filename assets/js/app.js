@@ -11,13 +11,35 @@
     noResults: "لا نتائج تطابق هذا البحث. جرّب كلمة أقصر، أو رمز الوثيقة، أو أزل أحد الفلاتر.",
     copied: "نُسخ", copyFail: "تعذّر النسخ تلقائيًا: حدّد النص وانسخه يدويًا"
   };
-  var FILES = ["meta", "resources", "documents", "rights", "reports", "tunisia", "guides", "aliases"];
-  var NAV = [
-    ["home", "الرئيسية"], ["map", "خريطة المنظومة"], ["library", "الموارد"], ["docs", "فهرس التعليقات العامة"], ["section-standards", "المعايير"], ["section-treaty", "الهيئات التعاهدية"], ["section-hrc", "مجلس حقوق الإنسان"],
-    ["section-caselaw", "الاجتهادات"], ["section-regional", "المنظومات الإقليمية"], ["rights", "الحقوق والحريات"],
-    ["tunisia", "ملف تونس", "tn"], ["reports", "التقارير حول تونس", "tn"], ["section-tools", "أدوات البحث"],
-    ["search", "البحث المتقدم"], ["lists", "قوائمي"], ["guides", "أدلة"]
+  var FILES = ["meta", "resources", "documents", "rights", "reports", "tunisia", "guides", "aliases", "glossary"];
+  var MENU = [
+    { r: "home", label: "الرئيسية", icon: "home" },
+    { label: "المعايير والآليات", icon: "scale", items: [
+      ["section-standards", "المعايير والصكوك الدولية", "المعاهدات والبروتوكولات والإعلانات والمبادئ"],
+      ["section-treaty", "الهيئات التعاهدية", "اللجان العشر وتعليقاتها وملاحظاتها"],
+      ["section-hrc", "مجلس حقوق الإنسان والإجراءات الخاصة", "الاستعراض الدوري، المقررون، المراسلات"],
+      ["section-caselaw", "الاجتهادات والقرارات", "أحكام وآراء وقرارات في حالات فردية"],
+      ["section-regional", "المنظومات الإقليمية", "الإفريقية والعربية والأوروبية والأمريكية"],
+      ["map", "خريطة المنظومة", "نظرة شاملة على البنية كلها"]] },
+    { r: "rights", label: "الحقوق والحريات", icon: "rights" },
+    { label: "تونس", tn: true, icon: "flag", items: [
+      ["tunisia", "ملف تونس", "الملاحظات الختامية، الاستعراض، القرارات، الخط الزمني"],
+      ["reports", "التقارير حول تونس", "أبحاث المنظمات منذ 2020"],
+      ["laws", "التشريعات الوطنية", "نصوص تونسية مرتبطة بالحقوق"]] },
+    { label: "أدوات الباحث", icon: "search", items: [
+      ["search", "البحث المتقدم", "بحث بالفلاتر في كل المكتبة"],
+      ["docs", "فهرس التعليقات العامة", "جدول كامل حسب اللجنة"],
+      ["library", "المواقع وقواعد البيانات", "كل الموارد في بطاقات"],
+      ["section-tools", "أدوات البحث الشاملة", "قواعد الأمم المتحدة والوكالات"],
+      ["guides", "أدلة البحث", "خطوة بخطوة، وأداة الرموز"],
+      ["learn", "تعلّم المنظومة", "مسار قصير للمبتدئين"],
+      ["glossary", "معجم المصطلحات", "تعريفات مبسّطة"]] },
+    { r: "lists", label: "قوائمي", icon: "star" }
   ];
+  var BOTTOM = [["home", "الرئيسية", "home"], ["rights", "الحقوق", "rights"], ["tunisia", "تونس", "flag"], ["search", "بحث", "search"], ["__menu", "القائمة", "menu"]];
+  var TYPE_ICON = { treaty: "scale", protocol: "scale", charter: "scale", gc: "book", co: "committee", decision: "gavel", judgment: "gavel", order: "gavel", opinion: "gavel",
+    declaration: "rights", guidelines: "rights", "sp-report": "council", mandate: "council", legislation: "flag", report: "report", briefing: "report", submission: "report",
+    statement: "report", annual: "report", resource: "globe" };
   var BIND = { treaty: "f-bind", protocol: "f-bind", charter: "f-bind", judgment: "f-bind", order: "f-bind", gc: "f-interp", decision: "f-interp",
     co: "f-soft", declaration: "f-soft", guidelines: "f-soft", opinion: "f-soft", "sp-report": "f-soft", legislation: "f-bind", mandate: "f-interp",
     report: "f-res", briefing: "f-res", submission: "f-res", statement: "f-res", annual: "f-res", resource: "f-res" };
@@ -88,6 +110,7 @@
   }
 
   function build() {
+    (D.glossary.terms || []).forEach(function (g) { (g.types || []).forEach(function (t) { TYPEDEF[t] = g.def; }); });
     D.meta.sections.forEach(function (s) { SEC[s.id] = s; });
     D.rights.forEach(function (r) { RIGHT[r.id] = r; });
     PUB = D.meta.publishers;
@@ -206,9 +229,25 @@
       '<button class="iconbtn" data-act="list" data-id="' + esc(it.id) + '" title="' + UI.addList + '" aria-label="' + UI.addList + '">' + ic("list") + "</button>" +
       '<a class="iconbtn" href="' + href(it.id) + '" title="' + UI.cite + " و" + UI.details + '" aria-label="' + UI.details + '">' + ic("quote") + "</a></span>";
   }
+  var TYPEDEF = {};
   function forceBadge(it) {
-    var f = forceName(it.type);
-    return '<span class="badge ' + (BIND[it.type] || "f-res") + '">' + esc(typeName(it.type)) + (f ? " · " + esc(f) : "") + "</span>";
+    var f = forceName(it.type), def = TYPEDEF[it.type];
+    return '<span class="badge ' + (BIND[it.type] || "f-res") + '"' + (def ? ' title="' + esc(def) + '"' : "") + ">" + ic(TYPE_ICON[it.type] || "report", "xs") + esc(typeName(it.type)) + (f ? " · " + esc(f) : "") + "</span>" +
+      (isNew(it) ? '<span class="badge new">جديد</span>' : "");
+  }
+  function isNew(it) {
+    if (!it.added || !D.meta.launch || it.added <= D.meta.launch) return false;
+    return (Date.now() - Date.parse(it.added)) < 30 * 864e5;
+  }
+  function legend() {
+    return '<div class="legend" role="note"><span class="muted">مفتاح القيمة القانونية:</span>' +
+      '<span class="badge f-bind">' + ic("scale", "xs") + "ملزم</span>" + '<span class="badge f-interp">' + ic("book", "xs") + "تفسير معتمد</span>" +
+      '<span class="badge f-soft">' + ic("rights", "xs") + "غير ملزم / توصيات</span>" + '<span class="badge f-res">' + ic("report", "xs") + "بحث أو مورد</span>" +
+      '<a href="#glossary">ما الفرق؟</a></div>';
+  }
+  function shareBtns(extra) {
+    var framed = false; try { framed = window.top !== window.self; } catch (e) { framed = true; }
+    return '<button class="btn sm" data-act="copylink">' + ic("link") + " نسخ رابط الصفحة</button>" + (framed ? "" : '<button class="btn sm" data-act="print">' + ic("print") + " طباعة / PDF</button>") + (extra || "");
   }
   function resCard(r) {
     var more = "";
@@ -262,30 +301,75 @@
 
   /* ------------------------------------------------------------------ views */
   function vHome() {
-    var cards = D.meta.sections.map(function (s) {
-      var n = s.id === "rights" ? D.rights.length : s.id === "reports" ? D.reports.length : inSection(s.id).length;
-      return '<a class="sec-card' + (s.id === "tunisia" || s.id === "reports" ? " tn" : "") + '" href="#' + (s.id === "rights" || s.id === "reports" || s.id === "tunisia" ? s.id : "section-" + s.id) + '">' +
-        '<span class="ico">' + ic(s.icon, "lg") + "</span><h2>" + esc(s.name) + '<span class="num">' + n + "</span></h2><p>" + esc(s.desc) + "</p></a>";
-    }).join("");
-    var latest = D.reports.slice().sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); }).slice(0, 4).map(function (r) { return BY[r.id]; });
     var hints = ["حرية التعبير", "CCPR/C/GC/34", "المادة 9 الاحتجاز", "المقرر الخاص المعني بالتعذيب", "تونس الهجرة", "CEDAW"];
+    var doors = [
+      ["rights", "rights", "أبحث في حق", "من النص الملزم إلى التفسير والآليات والتطبيق في تونس، لـ " + D.rights.length + " حقًا.", D.rights.slice(0, 4).map(function (r) { return ['#right-' + r.id, r.title]; })],
+      ["search", "search", "أبحث عن وثيقة", "برمزها أو اسمها أو اللجنة أو المادة، مع فلاتر النوع والسنة واللغة.", [["#docs", "فهرس التعليقات العامة"], ["#section-caselaw", "الاجتهادات والقرارات"], ["#library", "المواقع وقواعد البيانات"], ["#guides", "أدلة البحث"]]],
+      ["tunisia", "flag", "أتابع تونس", "الملاحظات الختامية، الاستعراض الدوري، القرارات الإقليمية، و" + D.reports.length + " تقريرًا منذ 2020.", [["#tunisia", "ملف تونس"], ["#reports", "التقارير حول تونس"], ["#laws", "التشريعات الوطنية"], ["#right-migration", "الهجرة واللجوء"]]]
+    ].map(function (d) {
+      return '<article class="door' + (d[0] === "tunisia" ? " tn" : "") + '"><a class="door-head" href="#' + d[0] + '"><span class="ico">' + ic(d[1], "lg") + "</span><h2>" + esc(d[2]) + "</h2></a><p>" + esc(d[3]) + "</p>" +
+        '<ul class="door-links">' + d[4].map(function (l) { return '<li><a href="' + l[0] + '">' + esc(l[1]) + "</a></li>"; }).join("") + "</ul></article>";
+    }).join("");
+    var mini = [["المعايير", "standards"], ["الهيئات التعاهدية", "treaty"], ["مجلس حقوق الإنسان", "hrc"], ["الاجتهادات", "caselaw"], ["المنظومات الإقليمية", "regional"]].map(function (x, i) {
+      return (i ? '<span class="arrow" aria-hidden="true">←</span>' : "") + '<a class="mini" href="#section-' + x[1] + '">' + ic(SEC[x[1]].icon) + "<span>" + esc(x[0]) + '</span><b class="num">' + inSection(x[1]).length + "</b></a>";
+    }).join("");
+    var latest = IDX.filter(function (it) { return it.kind === "report" || (it.kind === "document" && it.year && it.year >= new Date().getFullYear() - 1); })
+      .sort(function (a, b) { return String(b.date || b.year).localeCompare(String(a.date || a.year)); }).slice(0, 5);
     return '<section class="hero"><span class="eyebrow">' + esc(D.meta.name_en) + "</span><h1>" + esc(D.meta.name) + "</h1><p>" + esc(D.meta.tagline) + "</p>" +
       '<form class="bigsearch" id="homeSearch" role="search"><input id="hq" type="search" placeholder="ابحث بالحق، الاتفاقية، رقم المادة، رمز الوثيقة، اللجنة، المقرر الخاص…" aria-label="بحث في المكتبة" autocomplete="off">' + ic("search") +
       '<button class="btn primary" type="submit">بحث</button></form>' +
-      '<div class="hints"><span>أمثلة:</span>' + hints.map(function (h) { return '<a href="#search" data-q="' + esc(h) + '">' + esc(h) + "</a>"; }).join("") +
-      '<span>·</span><a href="#search">البحث المتقدم بالفلاتر</a></div></section>' +
-      '<div class="tier">أقسام المكتبة</div><div class="grid-sec">' + cards + "</div>" +
-      '<div class="tier">تونس أولًا</div><div class="tn-band"><div><strong>ملف تونس والتقارير الحقوقية منذ 2020</strong><p>' + esc(D.tunisia.note_court) + "</p></div>" +
-      '<div class="btns"><a class="btn tn" href="#tunisia">ملف تونس</a><a class="btn" href="#reports">التقارير حول تونس</a></div></div>' +
-      '<div class="tier">أحدث التقارير المُضافة</div>' + rows(latest) +
+      '<div class="hints"><span>أمثلة:</span>' + hints.map(function (h) { return '<a href="#search" data-q="' + esc(h) + '">' + esc(h) + "</a>"; }).join("") + "</div></section>" +
+      '<div class="doors">' + doors + "</div>" +
+      '<div class="tier">خريطة المنظومة باختصار <a href="#map" class="tier-link">الخريطة الكاملة</a></div><nav class="minimap" aria-label="خريطة المنظومة">' + mini + "</nav>" +
+      '<div class="tn-band" style="margin-top:22px"><div><strong>تنبيه حول تونس</strong><p>' + esc(D.tunisia.note_court) + '</p></div><div class="btns"><a class="btn tn" href="#tunisia">ملف تونس</a></div></div>' +
+      '<div class="tier">أحدث الوثائق والتقارير <a href="#reports" class="tier-link">كل التقارير</a></div>' + rows(latest) +
+      '<div class="learn-cta"><div><strong>جديد في منظومة حقوق الإنسان؟</strong><p>مسار قصير من خمس خطوات يشرح الفرق بين المعاهدة والتعليق العام والملاحظات الختامية، مع تمرين عملي في كل خطوة.</p></div><a class="btn primary" href="#learn">' + ic("book") + " ابدأ التعلّم</a></div>" +
       '<div class="facts"><span><b>' + D.resources.length + "</b> موقعًا وقاعدة بيانات</span><span><b>" + D.documents.length + "</b> وثيقة مفهرسة</span><span><b>" + D.reports.length +
       "</b> تقريرًا حول تونس</span><span><b>" + D.rights.length + "</b> حقًا مفهرسًا</span><span>آخر تحديث: <b>" + esc(fmtDate(D.meta.updated)) + "</b></span></div>";
+  }
+
+  /* ---- new pages: about, learn, glossary, laws */
+  function vAbout() {
+    var o = D.meta.org || {};
+    return crumbs([[UI.home, "home"], ["عن المكتبة"]]) + head("عن المكتبة", esc(D.meta.name), D.meta.tagline) +
+      '<div class="prose">' +
+      (o.name ? "<p>تعدّ المكتبة وتحدّثها <b>" + esc(o.name) + "</b>" + (o.url ? " (" + ext(o.url, esc(host(o.url))) + ")" : "") + ".</p>" : "") +
+      "<h2>لمن هذه المكتبة؟</h2><p>للباحثين والناشطين الحقوقيين، وخاصة من يبدؤون العمل على منظومة حقوق الإنسان. تجمع المعايير الدولية والآليات الأممية والإقليمية والاجتهادات في مكان واحد، وتربطها بالحقوق وبالوضع في تونس.</p>" +
+      "<h2>كيف نختار المصادر؟</h2><ul><li>الأولوية للمصادر الرسمية: الأمم المتحدة، والهيئات والمحاكم الإقليمية، والجهات الناشرة الأصلية.</li><li>لا نضيف وثيقة لم نتحقق من وجودها على موقع الجهة التي أصدرتها، ونسجّل تاريخ آخر تحقق من كل رابط.</li><li>نذكر لغة الوثيقة الأصلية واللغات المتاحة، ولا نقدّم ترجمة غير رسمية على أنها رسمية.</li><li>تقارير المنظمات غير الحكومية مصادر بحثية لا وثائق رسمية، ونعلّمها بذلك.</li></ul>" +
+      "<h2>كيف نميّز بين الوثائق؟</h2><p>لكل وثيقة لون وأيقونة ثابتان يبيّنان قيمتها القانونية:</p>" + legend() +
+      "<h2>التحديث والتصحيح</h2><p>آخر تحديث للمحتوى: <b>" + esc(fmtDate(D.meta.updated)) + "</b>. الوثائق المعلَّمة «مشروع» أو «تحقّق» لم يكتمل اعتمادها عند التحديث. إن وجدت رابطًا معطّلًا أو معلومة تحتاج تصحيحًا" +
+      (o.email ? '، راسلنا على <span class="sym" style="user-select:all">' + esc(o.email) + "</span>" : "، أبلغ القائمين على المكتبة") + ".</p>" +
+      "<h2>الخصوصية</h2><p>لا تجمع المكتبة أي بيانات عن زوارها. المفضلة وقوائم البحث محفوظة في متصفحك على جهازك فقط.</p></div>";
+  }
+  function vLearn() {
+    var steps = D.glossary.learn.map(function (st_, i) {
+      return '<li class="step"><span class="stepn num">' + (i + 1) + '</span><div><h2>' + esc(st_.title) + "</h2><p>" + esc(st_.body) + '</p><div class="tipbox"><b>تمرين:</b> ' + esc(st_.exercise) + "</div>" +
+        '<div class="chips" style="margin-top:10px">' + st_.links.map(function (l) { return '<a class="chip" href="#' + l[1] + '">' + esc(l[0]) + "</a>"; }).join("") + "</div></div></li>";
+    }).join("");
+    return crumbs([[UI.home, "home"], ["تعلّم المنظومة"]]) + head("مسار للمبتدئين", "تعلّم منظومة حقوق الإنسان في خمس خطوات", "كل خطوة تشرح جزءًا من المنظومة في فقرة، ثم تطلب منك تمرينًا قصيرًا داخل المكتبة نفسها. تحتاج إلى نحو ساعة لإكمال المسار.") +
+      '<ol class="steps">' + steps + "</ol>" + '<p class="muted" style="margin-top:18px">تحتاج تعريف مصطلح؟ افتح <a href="#glossary">معجم المصطلحات</a>.</p>';
+  }
+  function vGlossary() {
+    var q = norm(st.gq || "");
+    var terms = D.glossary.terms.filter(function (g) { return !q || norm(g.term + " " + g.en + " " + g.fr + " " + g.def).indexOf(q) >= 0; });
+    return crumbs([[UI.home, "home"], ["معجم المصطلحات"]]) + head("مرجع سريع", "معجم المصطلحات", "تعريفات مبسّطة لأكثر المصطلحات استعمالًا في المكتبة، مع مقابلها بالإنجليزية والفرنسية.", '<span class="muted num">' + terms.length + " مصطلحًا</span>") +
+      '<input class="ctl" id="gq" type="search" value="' + esc(st.gq || "") + '" placeholder="ابحث عن مصطلح…" aria-label="بحث في المعجم" style="margin-bottom:16px;width:min(420px,100%)">' +
+      '<dl class="gloss">' + terms.map(function (g) {
+        return '<div class="term" id="t-' + g.id + '"><dt>' + esc(g.term) + '<span class="en">' + esc(g.en) + " · " + esc(g.fr) + "</span></dt><dd>" + esc(g.def) +
+          (g.see ? ' <a href="#' + g.see + '">اطّلع في المكتبة ←</a>' : "") + "</dd></div>";
+      }).join("") + "</dl>";
+  }
+  function vLaws() {
+    var laws = IDX.filter(function (it) { return it.type === "legislation"; }).sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); });
+    var dbs = ["iort", "dcaf-leg"].map(function (i) { return BY[i]; }).filter(Boolean);
+    return crumbs([[UI.home, "home"], ["ملف تونس", "tunisia"], ["التشريعات الوطنية"]]) + head("تونس", "التشريعات الوطنية ذات الصلة", "نصوص تونسية يكثر الرجوع إليها في العمل الحقوقي، مرتبطة بالحقوق التي تمسّها. ابحث عن النص بعدده وسنته في قواعد البيانات أدناه، وتحقّق منه في الرائد الرسمي قبل الاقتباس.", "", "tn-head") +
+      '<div class="cards" style="margin-bottom:20px">' + dbs.map(resCard).join("") + "</div>" + rows(laws, { tn: false, showType: false });
   }
 
   function vSection(sid) {
     var s = SEC[sid]; if (!s) return vNotFound();
     var html = crumbs([[UI.home, "home"], [s.name]]) + head("قسم", ic(s.icon, "lg") + " " + esc(s.name), s.desc,
-      '<a class="btn" href="#search" data-section="' + sid + '">' + ic("search") + " البحث داخل القسم</a>");
+      '<a class="btn" href="#search" data-section="' + sid + '">' + ic("search") + " البحث داخل القسم</a>") + legend();
     (s.groups || []).forEach(function (g) {
       var items = inSection(sid, g);
       if (!items.length && !(sid === "treaty" && g === "التعليقات العامة")) return;
@@ -295,7 +379,7 @@
       if (sid === "treaty" && g === "التعليقات العامة") {
         var bodies = D.meta.bodies.filter(function (b) { return b.code !== "ACHPR"; });
         var gcs = docs.filter(function (d) { return d.type === "gc" && (!st.gcBody || d.body === st.gcBody || (d.number || "").indexOf(st.gcBody) >= 0); });
-        html += (res.length ? '<div class="cards" style="margin-bottom:14px">' + res.map(resCard).join("") + "</div>" : "") +
+        html += legend() + (res.length ? '<div class="cards" style="margin-bottom:14px">' + res.map(resCard).join("") + "</div>" : "") +
           '<div class="chips group-filter"><button class="chip" data-gcbody="" aria-pressed="' + (!st.gcBody) + '">كل اللجان</button>' +
           bodies.map(function (b) { return '<button class="chip" data-gcbody="' + b.code + '" aria-pressed="' + (st.gcBody === b.code) + '">' + esc(b.name) + "</button>"; }).join("") + "</div>" +
           limited("gc-" + st.gcBody, gcs.sort(function (a, b) { return (parseInt(a.number, 10) || 0) - (parseInt(b.number, 10) || 0); }), 12, function (l) { return rows(l, { showType: false }); });
@@ -339,7 +423,7 @@
     var regional = r.regional.map(function (i) { return BY[i]; }).filter(Boolean);
     var html = crumbs([[UI.home, "home"], [UI.rights, "rights"], [r.title]]) +
       '<div class="rights"><nav class="rlist" aria-label="الحقوق">' + list + "</nav><div>" + sel +
-      '<article class="panel"><header><span class="eyebrow">الحقوق والحريات</span><h1>' + esc(r.title) + "</h1><p>" + esc(r.short) + "</p></header>" +
+      '<article class="panel"><header><span class="eyebrow">الحقوق والحريات</span><h1>' + esc(r.title) + "</h1><p>" + esc(r.short) + '</p><div class="toolbar" style="margin-top:10px">' + shareBtns() + "</div></header>" +
       part(1, "الأساس القانوني", "المعاهدات والاتفاقيات الملزمة والمواد ذات الصلة", legal) +
       part(2, "التفسير القانوني", "التعليقات والتوصيات العامة، ثم المعايير غير الملزمة",
         (interp.length ? rows(interp) : '<p class="empty">لا تعليق عام مخصّص لهذا الحق بعد.</p>') +
@@ -429,9 +513,21 @@
       return '<div class="row"><div class="row-main"><div class="row-title">' + ext(t.url, esc(t.title)) + '</div><div class="row-meta">' + esc((PUB[t.publisher] || {}).en || "") + " · " + esc(t.summary) + "</div></div></div>";
     }).join("") + "</div>";
     return crumbs([[UI.home, "home"], [SEC.reports.name]]) +
-      head("مكتبة رقمية", esc(SEC.reports.name), SEC.reports.desc, '<span class="muted num">' + list.length + " من " + D.reports.length + "</span>") +
+      head("مكتبة رقمية", esc(SEC.reports.name), SEC.reports.desc, '<span class="muted num">' + list.length + " من " + D.reports.length + "</span>") + repChart(list) +
       '<p class="muted" style="margin:-10px 0 16px;font-size:13.5px">كل عنوان هنا تحقّقنا من وجوده على موقع الجهة الناشرة. التصنيف حسب الموضوع اجتهاد من المكتبة. البيانات الصحفية والفصول السنوية معلَّمة بنوعها حتى لا تُخلط بالتقارير البحثية.</p>' +
       filters + yearnav + body + trackers;
+  }
+  function repChart(list) {
+    var byY = {}, byT = {};
+    list.forEach(function (r) { byY[r.year] = (byY[r.year] || 0) + 1; r.topics.forEach(function (t) { byT[t] = (byT[t] || 0) + 1; }); });
+    var ys = Object.keys(byY).sort(), maxY = Math.max.apply(null, ys.map(function (y) { return byY[y]; }).concat([1]));
+    var ts = D.meta.topics.filter(function (t) { return byT[t.id]; }).sort(function (a, b) { return byT[b.id] - byT[a.id]; }).slice(0, 6), maxT = ts.length ? byT[ts[0].id] : 1;
+    if (!ys.length) return "";
+    return '<div class="chart"><figure><figcaption>عدد العناصر حسب السنة</figcaption><div class="cols">' + ys.map(function (y) {
+      return '<button class="col" data-year="' + y + '" title="' + y + ": " + byY[y] + '"><span class="bar" style="height:' + Math.round(byY[y] / maxY * 100) + '%"></span><b class="num">' + byY[y] + '</b><span class="num">' + y + "</span></button>";
+    }).join("") + '</div></figure><figure><figcaption>أكثر المواضيع حضورًا</figcaption><ul class="hbars">' + ts.map(function (t) {
+      return '<li><button data-topic="' + t.id + '"><span class="lbl">' + esc(t.name) + '</span><span class="track"><span style="width:' + Math.round(byT[t.id] / maxT * 100) + '%"></span></span><b class="num">' + byT[t.id] + "</b></button></li>";
+    }).join("") + "</ul></figure></div>";
   }
   function repCard(r) {
     var p = PUB[r.publisherKey] || {};
@@ -499,7 +595,7 @@
       '<aside class="side"><div class="box"><h2>' + ic("quote") + " مولّد الإحالات</h2>" + citeBlock(d) + "</div>" +
       '<div class="box"><h2>المعلومات المرجعية</h2>' + meta + "</div>" +
       '<div class="box"><div class="toolbar"><button class="btn sm" data-act="fav" data-id="' + esc(d.id) + '" aria-pressed="' + isFav(d.id) + '">' + ic("star") + " " + (isFav(d.id) ? "في المفضلة" : "إلى المفضلة") + "</button>" +
-      '<button class="btn sm" data-act="list" data-id="' + esc(d.id) + '">' + ic("list") + " " + UI.addList + "</button></div></div></aside></div>";
+      '<button class="btn sm" data-act="list" data-id="' + esc(d.id) + '">' + ic("list") + " " + UI.addList + "</button>" + shareBtns() + "</div></div></aside></div>";
   }
   var TREATY_OF = { CCPR: "tr-iccpr", CESCR: "tr-icescr", CERD: "tr-icerd", CEDAW: "tr-cedaw", CAT: "tr-cat", CRC: "tr-crc", CMW: "tr-icmw", CRPD: "tr-crpd", CED: "tr-cped", ACHPR: "tr-achpr" };
   function relatedOf(d) {
@@ -619,10 +715,36 @@
       '<div class="resbar"><span class="muted num">' + r.items.length + " نتيجة" + (activeN ? " · " + activeN + " فلتر نشط" : "") + "</span>" +
       '<span class="toolbar"><button class="btn sm filtertoggle" data-act="togglef" aria-expanded="' + st.filtersOpen + '">الفلاتر' + (activeN ? " (" + activeN + ")" : "") + "</button>" +
       '<label class="fld" for="f-sort" style="display:flex;gap:6px;align-items:center">الترتيب<select class="ctl" id="f-sort">' + opt("rel", "الأكثر صلة", q.sort) + opt("new", "الأحدث", q.sort) + opt("old", "الأقدم", q.sort) + "</select></label></span></div>" +
-      symHint + rightsHtml +
+      activeChips(q) + symHint + rightsHtml +
       (res.length ? rows(res, { q: q.q }) : '<p class="empty">' + UI.noResults + "</p>") +
       (r.items.length > q.limit ? '<button class="btn showall" data-act="more">عرض المزيد (' + (r.items.length - q.limit) + ")</button>" : "") +
       "</div></div>";
+  }
+
+  var FLABEL = { kind: "الفئة", type: "النوع", publisher: "الجهة", right: "الحق", scope: "النطاق", lang: "اللغة", section: "القسم", yfrom: "من سنة", yto: "إلى سنة" };
+  function fval(k, v) {
+    if (k === "type") return typeName(v);
+    if (k === "right") return RIGHT[v] ? RIGHT[v].title : v;
+    if (k === "scope") return D.meta.scopes[v] || v;
+    if (k === "lang") return D.meta.langs[v] || v;
+    if (k === "section") return SEC[v] ? SEC[v].name : v;
+    if (k === "kind") return { document: "وثائق", report: "تقارير", resource: "مواقع", mandate: "ولايات" }[v] || v;
+    return v;
+  }
+  function activeChips(q) {
+    var ks = Object.keys(FLABEL).filter(function (k) { return q[k]; });
+    if (!ks.length) return "";
+    return '<div class="chips active-f" aria-label="الفلاتر النشطة">' + ks.map(function (k) {
+      return '<button class="chip on" data-act="rmf" data-k="' + k + '" aria-label="إزالة فلتر ' + esc(FLABEL[k]) + '">' + esc(FLABEL[k]) + ": " + esc(fval(k, q[k])) + " " + ic("x", "xs") + "</button>";
+    }).join("") + '<button class="chip" data-act="clearf">مسح الكل</button><button class="chip" data-act="copylink">' + ic("link", "xs") + " نسخ رابط هذا البحث</button></div>";
+  }
+  var lastSearchHash = "";
+  function syncSearchHash() {
+    var p = [], q = st.sq;
+    ["q", "kind", "type", "publisher", "right", "scope", "lang", "section", "yfrom", "yto"].forEach(function (k) { if (q[k]) p.push(k + "=" + encodeURIComponent(q[k])); });
+    if (q.sort && q.sort !== "rel") p.push("sort=" + q.sort);
+    lastSearchHash = "search" + (p.length ? "?" + p.join("&") : "");
+    try { history.replaceState(null, "", "#" + lastSearchHash); } catch (e) {}
   }
 
   /* ---- lists */
@@ -826,17 +948,18 @@
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !sheet.hidden) closeSheet(); });
   var toastEl = document.getElementById("toast"), tt;
   function toast(msg) { toastEl.textContent = msg; toastEl.hidden = false; clearTimeout(tt); tt = setTimeout(function () { toastEl.hidden = true; }, 2600); }
-  function updateNavCount() {
-    var a = document.querySelector('.nav a[data-r="lists"]'); if (!a) return;
-    var n = LISTS.fav.length + LISTS.lists.reduce(function (s, l) { return s + l.items.length; }, 0);
-    a.innerHTML = esc("قوائمي") + (n ? ' <span class="count">' + n + "</span>" : "");
-  }
 
   /* ------------------------------------------------------------------ routing */
   var LEGACY = { howto: "guides" };
   function parse() {
     var h = (location.hash || "").replace(/^#/, "");
     if (LEGACY[h]) return LEGACY[h];
+    if (h.indexOf("search?") === 0 && h === lastSearchHash) return "search";
+    if (h.indexOf("search?") === 0) {
+      var sp = {}; h.slice(7).split("&").forEach(function (kv) { var i = kv.indexOf("="); if (i > 0) { try { sp[kv.slice(0, i)] = decodeURIComponent(kv.slice(i + 1)); } catch (e) {} } });
+      st.sq = { q: sp.q || "", kind: sp.kind || "", type: sp.type || "", publisher: sp.publisher || "", right: sp.right || "", scope: sp.scope || "", lang: sp.lang || "", section: sp.section || "", yfrom: sp.yfrom || "", yto: sp.yto || "", sort: sp.sort || "rel", limit: 40 };
+      return "search";
+    }
     if (/^r-/.test(h)) return "right-" + h.slice(2);
     if (/^c-/.test(h)) {
       var c = h.slice(2), m = { tn: "tunisia", norms: "standards", tb: "treaty", hrc: "hrc", sp: "hrc", search: "tools", agencies: "tools", africa: "regional", arab: "regional", comp: "tools" };
@@ -861,6 +984,10 @@
       else if (r === "map") html = vMap();
       else if (r === "library") html = vLibrary();
       else if (r === "docs") html = vDocs();
+      else if (r === "about") html = vAbout();
+      else if (r === "learn") html = vLearn();
+      else if (r === "glossary") html = vGlossary();
+      else if (r === "laws") html = vLaws();
       else if (r === "main") return;
       else html = vNotFound();
     } catch (err) {
@@ -870,11 +997,8 @@
     var y = window.scrollY;
     main.innerHTML = '<div class="view">' + html + "</div>";
     if (r === "guides") updSym();
-    document.querySelectorAll(".nav a").forEach(function (a) {
-      var t = a.dataset.r, cur = t === r || (t === "rights" && r.indexOf("right-") === 0) || (t === "search" && r.indexOf("doc-") === 0 && false);
-      if (cur) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
-    });
-    var titleMap = { home: D.meta.name };
+    if (r === "search") syncSearchHash();
+    markNav(r);
     var h1 = main.querySelector("h1");
     document.title = (r === "home" ? D.meta.name : (h1 ? h1.textContent.trim() + " · " : "") + D.meta.name);
     if (keepScroll) window.scrollTo(0, y);
@@ -885,7 +1009,7 @@
   /* ------------------------------------------------------------------ events */
   document.getElementById("mastSearch").addEventListener("submit", function (e) {
     e.preventDefault(); var v = document.getElementById("mq").value.trim();
-    st.sq = Object.assign({}, st.sq, { q: v, limit: 40 }); go("search"); document.getElementById("mq").value = "";
+    st.sq = Object.assign({}, st.sq, { q: v, limit: 40 }); hideSug(); go("search"); document.getElementById("mq").value = "";
   });
   document.querySelector(".skip").addEventListener("click", function (e) { e.preventDefault(); main.focus(); });
 
@@ -905,6 +1029,7 @@
     else if (id === "rq") { clearTimeout(qt); qt = setTimeout(function () { st.rep.q = e.target.value; rerenderKeep("rq"); }, 220); }
     else if (id === "symIn") updSym();
     else if (id === "lq") { st.lib.q = e.target.value; rerenderKeep("lq"); }
+    else if (id === "gq") { st.gq = e.target.value; rerenderKeep("gq"); }
     else if (id === "gd-q") { st.gd.q = e.target.value; rerenderKeep("gd-q"); }
   });
   main.addEventListener("change", function (e) {
@@ -923,9 +1048,10 @@
     var n = document.getElementById(id); if (n) { n.focus(); try { if (pos != null) n.setSelectionRange(pos, pos); } catch (e) {} }
   }
   main.addEventListener("click", function (e) {
-    var el = e.target.closest("[data-act], [data-q], [data-section], [data-gcbody], [data-cstyle], [data-year], [data-lang], [data-libcat], [data-node]");
+    var el = e.target.closest("[data-act], [data-q], [data-section], [data-gcbody], [data-cstyle], [data-year], [data-lang], [data-libcat], [data-node], [data-topic]");
     if (!el) return;
     if (el.dataset.node) { st.lib.cat = el.dataset.node; go("library"); return; }
+    if (el.dataset.topic) { st.rep.topic = st.rep.topic === el.dataset.topic ? "" : el.dataset.topic; render(true); return; }
     if (el.dataset.libcat != null) { st.lib.cat = el.dataset.libcat; render(true); return; }
     if (el.dataset.q != null && el.tagName === "A") { e.preventDefault(); st.sq = Object.assign({}, st.sq, { q: el.dataset.q, limit: 40 }); go("search"); return; }
     if (el.dataset.section) { e.preventDefault(); st.sq = Object.assign({}, st.sq, { section: el.dataset.section, q: "", limit: 40 }); st.filtersOpen = true; go("search"); return; }
@@ -956,15 +1082,107 @@
       render(true);
     }
     else if (act === "libar") { st.lib.ar = !st.lib.ar; render(true); }
+    else if (act === "rmf") { st.sq[el.dataset.k] = ""; render(true); }
+    else if (act === "copylink") copyText(location.href, "نُسخ رابط الصفحة");
+    else if (act === "print") { try { window.print(); } catch (e2) {} }
     else if (act === "libtn") { st.lib.tn = !st.lib.tn; render(true); }
     else if (act === "dellist") { st.confirmDel = list; render(true); }
     else if (act === "dellist-no") { st.confirmDel = null; render(true); }
     else if (act === "dellist-yes") { LISTS.lists = LISTS.lists.filter(function (x) { return x.id !== list; }); st.confirmDel = null; saveLists(); toast("حُذفت القائمة"); render(true); }
   });
 
-  /* ------------------------------------------------------------------ boot */
+  /* ------------------------------------------------------------------ navigation (menus, bottom bar, theme) */
   var nav = document.getElementById("nav");
-  nav.innerHTML = NAV.map(function (n) { return '<a href="#' + n[0] + '" data-r="' + n[0] + '"' + (n[2] ? ' class="tn"' : "") + ">" + esc(n[1]) + (n[2] === "tn" && n[0] === "tunisia" ? '<span class="dot" aria-hidden="true"></span>' : "") + "</a>"; }).join("");
+  function menuHtml(mobile) {
+    return MENU.map(function (m, i) {
+      if (!m.items) return '<a class="nav-top" href="#' + m.r + '" data-r="' + m.r + '">' + (mobile ? ic(m.icon) : "") + esc(m.label) + (m.r === "lists" ? '<span class="count" data-count></span>' : "") + "</a>";
+      var items = m.items.map(function (x) { return '<a href="#' + x[0] + '" data-r="' + x[0] + '"><b>' + esc(x[1]) + "</b><small>" + esc(x[2]) + "</small></a>"; }).join("");
+      if (mobile) return '<div class="msec"><p class="eyebrow">' + esc(m.label) + "</p>" + items + "</div>";
+      return '<div class="dd' + (m.tn ? " tn" : "") + '"><button class="nav-top" type="button" aria-expanded="false" aria-controls="dd' + i + '" data-dd="' + i + '">' + esc(m.label) +
+        (m.tn ? '<span class="dot" aria-hidden="true"></span>' : "") + ' <span class="caret" aria-hidden="true">▾</span></button><div class="dd-panel" id="dd' + i + '" hidden>' + items + "</div></div>";
+    }).join("");
+  }
+  nav.innerHTML = menuHtml(false);
+  var bottom = document.getElementById("bottombar");
+  bottom.innerHTML = BOTTOM.map(function (b) {
+    return b[0] === "__menu" ? '<button type="button" data-act="mmenu" aria-label="كل الأقسام">' + ic(b[2]) + "<span>" + b[1] + "</span></button>"
+      : '<a href="#' + b[0] + '" data-r="' + b[0] + '">' + ic(b[2]) + "<span>" + b[1] + "</span></a>";
+  }).join("");
+  function closeDD(except) {
+    nav.querySelectorAll("[data-dd]").forEach(function (b) { if (b !== except) { b.setAttribute("aria-expanded", "false"); document.getElementById("dd" + b.dataset.dd).hidden = true; } });
+  }
+  nav.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-dd]");
+    if (b) { var open = b.getAttribute("aria-expanded") === "true"; closeDD(b); b.setAttribute("aria-expanded", String(!open)); document.getElementById("dd" + b.dataset.dd).hidden = open; return; }
+    if (e.target.closest("a")) closeDD();
+  });
+  document.addEventListener("click", function (e) { if (!e.target.closest(".dd")) closeDD(); if (!e.target.closest(".mast-search")) hideSug(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") { closeDD(); hideSug(); } });
+  bottom.addEventListener("click", function (e) {
+    if (e.target.closest("[data-act=mmenu]")) {
+      lastFocus = document.activeElement;
+      sheet.innerHTML = '<div class="sheet-back"><div class="sheet menu-sheet" role="dialog" aria-modal="true" aria-label="كل الأقسام"><div class="toolbar" style="justify-content:space-between"><h2>كل الأقسام</h2><button class="iconbtn" data-act="closesheet" aria-label="إغلاق">' + ic("x") + "</button></div>" + menuHtml(true) +
+        '<div class="msec"><p class="eyebrow">المكتبة</p><a href="#about" data-r="about"><b>عن المكتبة</b><small>المنهجية والتحديث</small></a></div></div></div>';
+      sheet.hidden = false; sheet.dataset.id = "";
+      var f = sheet.querySelector("a"); if (f) f.focus();
+    }
+  });
+  sheet.addEventListener("click", function (e) { if (e.target.closest(".menu-sheet a")) { sheet.hidden = true; sheet.innerHTML = ""; } });
+  function markNav(r) {
+    var rr = r.indexOf("right-") === 0 ? "rights" : r.indexOf("doc-") === 0 ? "" : r;
+    document.querySelectorAll("#nav [data-r], #bottombar [data-r]").forEach(function (a) {
+      if (a.dataset.r === rr) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+    });
+    nav.querySelectorAll(".dd").forEach(function (d) {
+      var has = !!d.querySelector('[data-r="' + rr + '"]'); d.querySelector(".nav-top").classList.toggle("cur", has);
+    });
+    var tnb = bottom.querySelector('[data-r="tunisia"]'); if (tnb && (rr === "reports" || rr === "laws")) tnb.setAttribute("aria-current", "page");
+  }
+  function updateNavCount() {
+    var n = LISTS.fav.length + LISTS.lists.reduce(function (s2, l) { return s2 + l.items.length; }, 0);
+    document.querySelectorAll("[data-count]").forEach(function (c) { c.textContent = n || ""; c.hidden = !n; });
+  }
+  // theme toggle: auto -> dark -> light
+  var TKEY = "yrl:theme", themeBtn = document.getElementById("themeBtn");
+  function applyTheme(t) {
+    if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t); else document.documentElement.removeAttribute("data-theme");
+    var lbl = { dark: "الوضع الليلي", light: "الوضع النهاري" }[t] || "حسب الجهاز";
+    themeBtn.innerHTML = ic(t === "dark" ? "moon" : t === "light" ? "sun" : "contrast"); themeBtn.title = "المظهر: " + lbl; themeBtn.setAttribute("aria-label", "تغيير المظهر، الحالي: " + lbl);
+  }
+  var theme = ""; try { theme = localStorage.getItem(TKEY) || ""; } catch (e) {}
+  applyTheme(theme);
+  themeBtn.addEventListener("click", function () {
+    theme = theme === "" ? "dark" : theme === "dark" ? "light" : "";
+    try { localStorage.setItem(TKEY, theme); } catch (e) {}
+    applyTheme(theme); toast(themeBtn.title);
+  });
+  // search suggestions
+  var mq = document.getElementById("mq"), sug = document.getElementById("sug"), sugT;
+  function hideSug() { sug.hidden = true; mq.setAttribute("aria-expanded", "false"); }
+  mq.addEventListener("input", function () {
+    clearTimeout(sugT);
+    sugT = setTimeout(function () {
+      var v = mq.value.trim(); if (v.length < 2 || !IDX.length) { hideSug(); return; }
+      var r = runSearch({ q: v, sort: "rel" });
+      var items = r.rights.slice(0, 3).map(function (x) { return ['#right-' + x.id, x.title, "حق"]; })
+        .concat(r.items.slice(0, 7 - Math.min(3, r.rights.length)).map(function (x) { return [href(x.id), x.title, typeName(x.type)]; }));
+      if (!items.length) { sug.innerHTML = '<p class="muted">لا اقتراحات. اضغط Enter للبحث الكامل.</p>'; }
+      else sug.innerHTML = items.map(function (x) { return '<a href="' + x[0] + '" role="option"><span>' + esc(x[1]) + '</span><small>' + esc(x[2]) + "</small></a>"; }).join("") +
+        '<a href="#search" data-all="1" role="option"><span>كل النتائج (' + (r.items.length + r.rights.length) + ")</span><small>Enter</small></a>";
+      sug.hidden = false; mq.setAttribute("aria-expanded", "true");
+    }, 150);
+  });
+  mq.addEventListener("keydown", function (e) { if (e.key === "ArrowDown" && !sug.hidden) { e.preventDefault(); var a = sug.querySelector("a"); if (a) a.focus(); } });
+  sug.addEventListener("keydown", function (e) {
+    var links = [].slice.call(sug.querySelectorAll("a")), i = links.indexOf(document.activeElement);
+    if (e.key === "ArrowDown") { e.preventDefault(); (links[i + 1] || links[0]).focus(); }
+    if (e.key === "ArrowUp") { e.preventDefault(); if (i <= 0) mq.focus(); else links[i - 1].focus(); }
+  });
+  sug.addEventListener("click", function (e) {
+    var a = e.target.closest("a"); if (!a) return;
+    if (a.dataset.all) { e.preventDefault(); st.sq = Object.assign({}, st.sq, { q: mq.value.trim(), limit: 40 }); go("search"); }
+    mq.value = ""; hideSug();
+  });
   updateNavCount();
   load().then(function () {
     document.getElementById("upd").textContent = fmtDate(D.meta.updated);
